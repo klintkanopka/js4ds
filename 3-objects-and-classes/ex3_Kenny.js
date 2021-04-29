@@ -43,35 +43,37 @@ for (let value of ['a', 'b', 'c', 'd', 'e']) {
 
 // Pipelines
 
+console.log('\nPipelines!\n')
+
 class Pipeline {
     constructor (filter, delay) {
       this.filter = []
       for (let i = 0; i < arguments.length; i++){
         this.filter.push(arguments[i])
         }
-    this.last = delay
-
     }
 
     call (val) {
-    if (this.filter.includes(val)){
-      this.last = current
-      return null
-    } else {
-      const last = this.last
-      this.last = current
-      return last
+      for (let i = 0; i < this.filter.length; i++){
+          if (val !== null){
+            val = this.filter[i].call(val)
+          } else {
+              return null
+          }
+      }
+      return val
     }
-    }
+}
 
-    const example = new Pipeline(new Filter('a', 'e', 'i', 'o', 'u'),
-                                 new Delay('a'))
-    for (let value of ['a' ,'b', 'c', 'd', 'e']) {
-      console.log(value, '->', example.call(value))
-    }
-
+const example3 = new Pipeline(new Filter('a', 'e', 'i', 'o', 'u'),
+                                  new Delay('a'))
+for (let value of ['a' ,'b', 'c', 'd', 'e']) {
+    console.log(value, '->', example3.call(value))
+}
+/*
     a -> null
     b -> a
     c -> b
     d -> e
     e -> null
+*/
