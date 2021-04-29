@@ -6,6 +6,8 @@
 // the call() function, but this works fine. i overloaded some names to make 
 // a point that this.last and last are different things!
 
+console.log('\n === Delays ===\n')
+
 class Delay {
     constructor (start) {
         this.last = start
@@ -25,6 +27,7 @@ for (let value of ['b', 'c', 'd']) {
 
 
 // Filtering
+console.log('\n === Filtering ===\n')
 
 class Filter {
     constructor () {
@@ -51,6 +54,8 @@ for (let value of ['a', 'b', 'c', 'd', 'e']) {
 
 // Pipelines
 
+console.log('\n === Pipelines ===\n')
+
 class Pipeline {
     constructor () {
         this.functions = []
@@ -60,18 +65,20 @@ class Pipeline {
     }
 
     call (val) {
-    
-
+         let output = this.functions.reduce((accum, func) => {
+             if (accum !== null){
+                accum = func.call(accum)
+             }
+             return accum
+         }, val)
+         return output
     }
+}
 
-
-
-
-
-const example = new Pipeline(new Filter('a', 'e', 'i', 'o', 'u'),
-                             new Delay('a'))
+const example3 = new Pipeline(new Filter('a', 'e', 'i', 'o', 'u'),
+                              new Delay('a'))
 for (let value of ['a' ,'b', 'c', 'd', 'e']) {
-  console.log(value, '->', example.call(value))
+  console.log(value, '->', example3.call(value))
 }
 
 /*
