@@ -23,18 +23,50 @@ for (let value of ['b', 'c', 'd']) {
   console.log(value, '->', example.call(value))
 }
 
-/*
-// Filtering
-//
 
-const example = new Filter('a', 'e', 'i', 'o', 'u')
-for (let value of ['a', 'b', 'c', 'd', 'e']) {
-  console.log(value, '->', example.call(value))
+// Filtering
+
+class Filter {
+    constructor () {
+        this.filter = []
+        for (let i = 0; i < arguments.length; i++){
+            this.filter.push(arguments[i])
+        }
+    }
+
+    call (val) {
+        if (this.filter.includes(val)){
+            return null
+        } else {
+            return val
+        }
+    }
 }
 
-/*
+const example2 = new Filter('a', 'e', 'i', 'o', 'u')
+for (let value of ['a', 'b', 'c', 'd', 'e']) {
+  console.log(value, '->', example2.call(value))
+}
+
+
 // Pipelines
-//
+
+class Pipeline {
+    constructor () {
+        this.functions = []
+        for (let i = 0; i < arguments.length; i++){
+            this.functions.push(arguments[i])
+        }
+    }
+
+    call (val) {
+    
+
+    }
+
+
+
+
 
 const example = new Pipeline(new Filter('a', 'e', 'i', 'o', 'u'),
                              new Delay('a'))
@@ -42,6 +74,7 @@ for (let value of ['a' ,'b', 'c', 'd', 'e']) {
   console.log(value, '->', example.call(value))
 }
 
+/*
 // Active Expressions
 //
 
