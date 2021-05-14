@@ -134,18 +134,15 @@ start.update(123)
 class NewActive {
   constructor (name) {
     this.name = name
-
     if (arguments.length > 1) {
-        this.trans = arguments[1]
-        this.custom = true
+        this.transform = arguments[1]
     } else {
-        this.custom = false
+        this.transform = this.defaultTransform
     }
-
     this.subscribers = []
   }
 
-  transform (input) {
+  defaultTransform (input) {
     let output = input ** -2
     return output
   }
@@ -156,12 +153,7 @@ class NewActive {
 
   update (input) {
     console.log(this.name, 'got', input)
-    var output
-    if (this.custom) {
-        output = this.trans(input)
-    } else {
-        output = this.transform(input)
-    }
+    const output = this.transform(input)
     for (let s of this.subscribers) {
       s.update(output)
     }
