@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>US Capital Quiz</title>
+    <!-- change plugin src path to 6.3.1!!-->
+    <script src="plugins/jspsych-6.3.1/jspsych.js"></script>
+    <script src="plugins/jspsych-6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
+    <script src="plugins/jspsych-6.3.1/plugins/jspsych-image-keyboard-response.js"></script>
+    <script src="plugins/jspsych-6.3.1/plugins/jspsych-preload.js"></script>
+    <script src="plugins/papaparse.min.js"></script>
+    <link href="plugins/jspsych-6.3.1/css/jspsych.css" rel="stylesheet" type="text/css">
+  </head>
+  <body></body>
+  <script>
+
+    /* create timeline */
+    var timeline = [];
+
+    /* preload the specified files */
+    var preload = {
+      type: 'preload',
+      images: [] /* nothing to preload yet */
+    }
+    timeline.push(preload);
+
+    /* define welcome message trial */
+    var welcome = {
+      type: "html-keyboard-response",
+      stimulus: `<h1>Congratulations!</h1>
+      <p>You have found the silly quiz I've developed to help me learn how to
+      develop experiments and assessments in jsPsych.</p>
+      <p>Currently, no data (personal or otherwise) is stored after you respond
+      to these questions. A few basic statistics about your performance will be
+      displayed at the end along with complete accuracy and timing data, but all
+      of this is computed in your browser and not sent to any centralized
+      database. <strong>This, however, will change soon.</strong> Note that this
+      probably will not work on mobile and I am OK with that.</p>
+      <p>Press any key to continue.</p>
+      `
+    };
+    timeline.push(welcome);
+
+    /* define instructions trial */
+    var instructions = {
+      type: "html-keyboard-response",
+      stimulus: `
+        <p>You will be presented with twelve US cities. You are to determine, as
+        quickly as possible, if that city was ever the capital of the United
+        States.</p>
+        <p>If you believe the city ever was the capital, press the <strong>RIGHT
+        ARROW KEY</strong></p>
+        <p>If the city was never the captial, press the <strong>LEFT ARROW
+        KEY</strong></p>
+        </div>
+        <p>Press any key to begin!</p>
+      `,
+      post_trial_gap: 2000
+    };
+    timeline.push(instructions);
+
+    /* practice test trials */
+    /* there's gotta be a better way to list out the stimuli - read in from a csv?? */
+    var test_stimuli = [
+      { stimulus: '<div style="font-size:60px;">Washington, DC</div>', correct_response: 'ArrowRight'},
+      { stimulus: '<div style="font-size:60px;">Philadelphia, PA</div>', correct_response: 'ArrowRight'},
+      { stimulus: '<div style="font-size:60px;">New York, NY</div>', correct_response: 'ArrowRight'},
+      { stimulus: '<div style="font-size:60px;">Trenton, NJ</div>', correct_response: 'ArrowRight'},
+      { stimulus: '<div style="font-size:60px;">Annapolis, MD</div>', correct_response: 'ArrowRight'},
+      { stimulus: '<div style="font-size:60px;">Princeton, NJ</div>', correct_response: 'ArrowRight'},
+      { stimulus: '<div style="font-size:60px;">Lancaster, PA</div>', correct_response: 'ArrowRight'},
+      { stimulus: '<div style="font-size:60px;">York, PA</div>', correct_response: 'ArrowRight'},
+      { stimulus: '<div style="font-size:60px;">Baltimore, MD</div>', correct_response: 'ArrowRight'},
+      { stimulus: '<div style="font-size:60px;">Hartford, CT</div>', correct_response: 'ArrowLeft'},
+      { stimulus: '<div style="font-size:60px;">Richmond, VA</div>', correct_response: 'ArrowLeft'},
+      { stimulus: '<div style="font-size:60px;">New Haven, CT</div>', correct_response: 'ArrowLeft'}
+    ];
+
+
+
+    var fixation = {
+      type: 'html-keyboard-response',
+      stimulus: '<div style="font-size:60px;">+</div>',
+      choices: jsPsych.NO_KEYS,
+      trial_duration: 1000,
+      data: {
+        task: 'fixation'
+      }
+    }
+
+    var test = {
+      type: "html-keyboard-response",
+      stimulus: jsPsych.timelineVariable('stimulus'),
+      stimulus_duration: 2000,
+      trial_duration: 5000,
+      choices: ['ArrowLeft', 'ArrowRight'],
+      data: {
+        task: 'response', /* tag the test trials with this taskname so we can filter data later */
+        correct_response: jsPsych.timelineVariable('correct_response')
+      },
+      on_finish: function(data){
+        data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
+      }
+    }
+
+    var test_procedure = {
+      timeline: [fixation, test], /* included in this timeline variable, so don't need to push these too */
+      timeline_variables: test_stimuli,
+      randomize_order: true
+    }
+
+    timeline.push(test_procedure);
+
+    var debrief_block = {
+      type: "html-keyboard-response",
+      stimulus: function() {
+
+        var trials = jsPsych.data.get().filter({task: 'response'});
+        var correct_trials = trials.filter({correct: true});
+        var incorrect_trials = trials.filter({correct: false});
+        var accuracy = Math.round(correct_trials.count() / trials.count() * 100);
+        var rt = Math.round(correct_trials.select('rt').mean());
+        var irt = Math.round(incorrect_trials.select('rt').mean());
+
+        return `<p>You responded correctly on ${accuracy}% of the trials.</p>
+          <p>Your average response time on correct trials was ${rt}ms.</p>
+          <p>Your average response time on incorrect trials was ${irt}ms.</p>
+          <p>Press any key to complete the experiment. Thank you!</p>`;
+
+      }
+    };
+
+    const csvPromise = new Promise((resolve, reject) => {
+      Papa.parse(
+          'https://raw.githubusercontent.com/klintkanopka/js4ds/main/roar/roar-blocks/ldt-stimuli.csv', {
+              download: true,
+              header: true,
+              dynamicTyping: true,
+              skipEmptyLines: true,
+              complete: function (results) {
+                  var csv_stimuli = results.data
+                  resolve(csv_stimuli)
+                }
+      })
+    })
+
+    csvPromise.then((csv_result) => {
+        csv_result = csv_result
+                      .reduce((accum, row) => {
+                        if (row.realpseudo === 'real') {
+                          correct_response = 'ArrowRight'
+                        } else {
+                          correct_response = 'ArrowLeft'
+                        }
+                        const newRow = {
+                          'stimulus': '<div style="font-size:60px;">' + row.word + '</div>',
+                          'correct_response': correct_response
+                        }
+                        accum.push(newRow)
+                        return accum
+                      }, [])
+        console.log(csv_result)
+        var csv_block = {
+          timeline: [fixation, test],
+          timeline_variables: csv_result,
+          randomize_order: true
+        }
+        //console.log(csv_block)
+        timeline.push(csv_block)
+    }).then(timeline.push(debrief_block))
+      .then(console.log(timeline))
+
+      /* start the experiment */
+      jsPsych.init({
+        timeline: timeline,
+        on_finish: function() {  /* display data on exp end - useful for dev */
+          jsPsych.data.displayData();
+        }
+      });
+
+
+  </script>
+</html>
